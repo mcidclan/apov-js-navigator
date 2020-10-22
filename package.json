@@ -1,0 +1,11 @@
+{
+    "name": "APoV",
+    "version": "1.0.0",
+    "scripts": {
+        "server": "nodemon main.js",
+        "client": "cd client && npm start"
+    },
+    "dependencies": {
+        "express": "^4.17.1"
+    }
+}

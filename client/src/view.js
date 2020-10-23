@@ -9,14 +9,15 @@ class View extends Component {
     }
     
     render() {
-        return <canvas ref={this.canvas} className="view" width={this.props.width}
-            height={this.props.height}></canvas>;
+        const size = this.props.size.split('x');
+        return <canvas ref={this.canvas} className="view" width={size[0]}
+            height={size[1]}></canvas>;
     }
     
     componentDidMount() {
-        this.gl = this.canvas.current.getContext("webgl");
+        this.gl = this.canvas.current.getContext('webgl');
         if(!this.gl) {
-           throw new Error("Can't initialize webgl.");
+           throw new Error('Can\'t initialize webgl.');
         }
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.disable(this.gl.DEPTH_TEST);

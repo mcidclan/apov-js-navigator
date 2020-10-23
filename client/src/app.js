@@ -4,7 +4,7 @@ import Menu from './menu';
 import './app.scss';
 
 function App() {
-    const [viewSize, setViewSize] = useState('640x480');
+    const [viewSize, setViewSize] = useState('256x256');
     
     function handleViewSizeChange(event) {
         setViewSize(event.target.value);
@@ -14,7 +14,7 @@ function App() {
         <div className="app">
             <Menu sizes={['1280x720', '640x480', '256x256', '512x512']} 
                 onViewSizeChange={handleViewSizeChange} />
-            <View size={viewSize} />
+            <View apovDisplaySize="2x2" size={viewSize} />
         </div>
     );
 }

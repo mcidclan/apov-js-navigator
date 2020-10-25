@@ -1,20 +1,32 @@
 import React, {Component} from 'react';
+import { Context } from "./streamer";
 import mat4 from 'gl-mat4'
 import './view.scss';
 
-const FRAGMENT_SHADER = `
+const FRAGMENT_SHADER = 
+`   #version 300 es
+    precision highp float;
+    uniform float twidth;
+    uniform sampler2D frame;
+    in float v_index;
+    out vec4 f_color;
     void main() {
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        float index = floor(v_index / 6.0);
+        vec4 bytes = texture(frame, vec2(mod(index, twidth), index/twidth));
+        f_color = vec4(bytes.r, bytes.g, bytes.b, 1.0);
     }
 `;
 
-const VERTEX_SHADER = `
-    //gl_VertexID;
-    attribute vec4 position;
+const VERTEX_SHADER = 
+`   #version 300 es
+    precision highp float;
+    layout(location = 0) in vec3 position;
     uniform mat4 projection;
     uniform mat4 model;
+    out float v_index;
     void main() {
-        gl_Position = projection * model * position;
+        v_index = float(gl_VertexID);
+        gl_Position = projection * model * vec4(position, 1.0);
     }
 `;
 
@@ -43,9 +55,11 @@ class View extends Component {
         gl.compileShader(fshader);
         
         if(!gl.getShaderParameter(fshader, gl.COMPILE_STATUS)) {
+            console.log('Can\'t comile fragment shader.', 
+            gl.getShaderInfoLog(fshader));
             gl.deleteShader(fshader);
-            throw new Error('Can\'t comile fragment shader.');
         }
+        
         const program = gl.createProgram();
         gl.attachShader(program, vshader);
         gl.attachShader(program, fshader);
@@ -56,6 +70,29 @@ class View extends Component {
         }
         gl.useProgram(program);
         this.program = program;
+    }
+    
+    initApovTexture(gl) {
+        // Todo
+        const frame = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, frame);
+        
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+        this.displayWidth, this.displayHeight, 0, gl.RGBA,
+        gl.UNSIGNED_BYTE, new Uint8Array([
+            255, 0, 0, 255,
+            0, 255, 0, 255,
+            255, 255, 0, 255, 
+            0, 0, 0, 255
+        ]));            
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_FILTER, gl.NEAREST);
+        gl.activeTexture(gl.TEXTURE0);
+        
+        gl.uniform1i(gl.getUniformLocation(this.program, "frame"), 0);
+        gl.uniform1f(gl.getUniformLocation(this.program, 'twidth'), this.displayWidth);
     }
     
     initApovDisplay(gl) {
@@ -96,7 +133,7 @@ class View extends Component {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(display),
         gl.STATIC_DRAW);
 
-        const position = gl.getAttribLocation(this.program, 'position');
+        const position = 0;
         gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(position);
         
@@ -113,7 +150,7 @@ class View extends Component {
         gl.uniformMatrix4fv(gl.getUniformLocation(
         this.program, 'projection'), false, projection);
     }
-    
+        
     initModelView(gl) {
         const model = mat4.create();
         mat4.translate(model, model, [0.0, 0.0, -1.0]);
@@ -131,15 +168,26 @@ class View extends Component {
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.initProjection(gl);
-        this.initModelView(gl);
+        this.initModelView(gl);    
+    }
+    
+    // Todo
+    setFrame(gl, value) {
+        if(value.frame.length > 0) {
+            console.log(value.frame);    
+        }
     }
     
     render() {
         const size = this.props.size.split('x');
         this.width = size[0];
         this.height = size[1];
-        return <canvas ref={this.canvas} className="view" width={this.width}
-            height={this.height}></canvas>;
+        
+        return  <canvas ref={this.canvas} className="view"
+                        width={this.width} height={this.height}>
+                        <Context.Consumer>{value =>
+                            this.setFrame(this.gl, value)}</Context.Consumer>
+                </canvas>;
     }
     
     draw() {
@@ -152,11 +200,12 @@ class View extends Component {
     }
     
     componentDidMount() {
-        this.gl = this.canvas.current.getContext('webgl');
+        this.gl = this.canvas.current.getContext('webgl2');
         if(!this.gl) {
-           throw new Error('Can\'t initialize webgl.');
+           throw new Error('Can\'t initialize webgl2.');
         }
         this.initApovShaders(this.gl);
+        this.initApovTexture(this.gl);
         this.initApovDisplay(this.gl);
         this.initWebglContext(this.gl);
         this.draw();

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Streamer from './streamer';
 import View from './view';
 import Menu from './menu';
 import './app.scss';
@@ -14,7 +15,9 @@ function App() {
         <div className="app">
             <Menu sizes={['1280x720', '640x480', '256x256', '512x512']} 
                 onViewSizeChange={handleViewSizeChange} />
-            <View apovDisplaySize="2x2" size={viewSize} />
+            <Streamer>
+                <View apovDisplaySize="2x2" size={viewSize} />
+            </Streamer>
         </div>
     );
 }

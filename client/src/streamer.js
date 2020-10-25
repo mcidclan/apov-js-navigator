@@ -21,7 +21,11 @@ class Streamer extends Component {
     
     render() {
         return  <Context.Provider value={this.state}>
-                    <div>Controls</div>
+                    <div className="control">
+                        <div><span/></div>
+                        <div><span/><span/></div>
+                        <div><span/></div>
+                    </div>
                     {this.props.children}
                 </Context.Provider>;
     }

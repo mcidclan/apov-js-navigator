@@ -3,6 +3,22 @@ import { Context } from "./streamer";
 import mat4 from 'gl-mat4'
 import './view.scss';
 
+const ENV_FRAGMENT_SHADER = 
+`   #version 300 es
+    precision middlep float;
+    out vec4 f_color;
+    void main() {
+        f_color = vec4(0.5, 0.5, 0.5, 1.0);
+    }
+`
+
+const ENV_VERTEX_SHADER = 
+`   #version 300 es
+    precision middlep float;
+    layout(location = 0) in vec3 position;
+    gl_Position = vec4(position, 1.0);
+`
+
 const FRAGMENT_SHADER = 
 `   #version 300 es
     precision highp float;
@@ -17,6 +33,7 @@ const FRAGMENT_SHADER =
         float v = f * (index/twidth);
         vec4 bytes = texture(frame, vec2(u, v));
         f_color = vec4(bytes.r, bytes.g, bytes.b, 1.0);
+        //gl_FragDepth = bytes.a;
     }
 `;
 
@@ -46,9 +63,9 @@ class View extends Component {
         this.atomCount = this.displayHeight*this.displayWidth;
     }
     
-    initApovShaders(gl) {
+    initShaders(gl, vertexShader, fragmentShader) {
         const vshader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vshader, VERTEX_SHADER);
+        gl.shaderSource(vshader, vertexShader);
         gl.compileShader(vshader);
         if(!gl.getShaderParameter(vshader, gl.COMPILE_STATUS)) {
             console.log('Can\'t compile vertex shader.',
@@ -56,7 +73,7 @@ class View extends Component {
             gl.deleteShader(vshader);
         }
         const fshader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fshader, FRAGMENT_SHADER);
+        gl.shaderSource(fshader, fragmentShader);
         gl.compileShader(fshader);
         
         if(!gl.getShaderParameter(fshader, gl.COMPILE_STATUS)) {
@@ -73,10 +90,19 @@ class View extends Component {
         if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
             throw new Error('Can\'t link shader program.');
         }
-        gl.useProgram(program);
-        this.program = program;
-    }
         
+        return program;
+    }
+     
+    initApovShaders(gl) {
+        this.program = this.initShaders(gl, VERTEX_SHADER, FRAGMENT_SHADER);
+        gl.useProgram(this.program);
+    }
+    
+    initEnvShaders(gl) {
+        //this.initShaders(gl, ENV_VERTEX_SHADER, ENV_FRAGMENT_SHADER);
+    }
+    
     updateApovTexture(gl, buffer) {
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
@@ -196,12 +222,19 @@ class View extends Component {
     render() {
         const size = this.props.size.split('x');
         this.width = size[0];
-        this.height = size[1];    
-        return  <canvas ref={this.canvas} className="view"
-                    width={this.width} height={this.height}>
-                    <Context.Consumer>{value =>
-                        this.setFrame(this.gl, value)}</Context.Consumer>
-                </canvas>;
+        this.height = size[1];
+        
+        const cStyle = {
+            "maxHeight": `${this.height}px`
+        };
+        
+        return  <div className="view">
+                    <canvas ref={this.canvas} style={cStyle}
+                        width={this.width} height={this.height}>
+                            <Context.Consumer>{value =>
+                            this.setFrame(this.gl, value)}</Context.Consumer>
+                    </canvas>
+                </div>;
     }
     
     draw() {

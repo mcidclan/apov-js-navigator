@@ -1,8 +1,8 @@
 /node_modules
 /build
-.DS_Store
+*.DS_Store
 npm-debug.log*
-.bin
-.bz2
-.gz
-.zip
+*.bin
+*.bz2
+*.gz
+*.zip

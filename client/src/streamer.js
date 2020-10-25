@@ -7,9 +7,16 @@ class Streamer extends Component {
     
     constructor(props) {
         super(props);
+        this.size = +this.props.frameSize.split('x')[0];
         this.state = {
             frame: []
         };
+    }
+    
+    retrieveFrame(offset) {
+        fetch(`/frame/0/${this.size}`)
+            .then(data => data.arrayBuffer())
+            .then(data => this.setState({frame:new Uint8Array(data)}));
     }
     
     render() {
@@ -20,9 +27,7 @@ class Streamer extends Component {
     }
     
     componentDidMount() {
-        fetch('/frame/0/32')
-            .then(data => data.arrayBuffer())
-            .then(data => this.setState({frame:new Uint8Array(data)}));
+        this.retrieveFrame(0);
     }
 }
 

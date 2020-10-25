@@ -11,8 +11,11 @@ const FRAGMENT_SHADER =
     in float v_index;
     out vec4 f_color;
     void main() {
+        float f = 1.0/twidth;
         float index = floor(v_index / 6.0);
-        vec4 bytes = texture(frame, vec2(mod(index, twidth), index/twidth));
+        float u = f * mod(index, twidth);
+        float v = f * (index/twidth);
+        vec4 bytes = texture(frame, vec2(u, v));
         f_color = vec4(bytes.r, bytes.g, bytes.b, 1.0);
     }
 `;
@@ -24,9 +27,11 @@ const VERTEX_SHADER =
     uniform mat4 projection;
     uniform mat4 model;
     out float v_index;
+    in vec4 f_color;
     void main() {
         v_index = float(gl_VertexID);
-        gl_Position = projection * model * vec4(position, 1.0);
+        vec4 pos = vec4(position.x, position.y, position.z, 1.0);
+        gl_Position = projection * model * pos;
     }
 `;
 
@@ -38,7 +43,7 @@ class View extends Component {
         const displaySizes = this.props.apovDisplaySize.split('x');
         this.displayWidth = displaySizes[0];
         this.displayHeight = displaySizes[1];
-        this.atomCount = this.displayHeight*this.displayWidth*6;
+        this.atomCount = this.displayHeight*this.displayWidth;
     }
     
     initApovShaders(gl) {
@@ -71,24 +76,30 @@ class View extends Component {
         gl.useProgram(program);
         this.program = program;
     }
-    
-    initApovTexture(gl) {
-        // Todo
-        const frame = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, frame);
         
+    updateApovTexture(gl, buffer) {
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
         this.displayWidth, this.displayHeight, 0, gl.RGBA,
-        gl.UNSIGNED_BYTE, new Uint8Array([
-            255, 0, 0, 255,
-            0, 255, 0, 255,
-            255, 255, 0, 255, 
-            0, 0, 0, 255
-        ]));            
+        gl.UNSIGNED_BYTE, buffer);
+    }
+    
+    initApovTexture(gl) {
+        this.texture = gl.createTexture();
+        const buff = new Uint8Array(this.atomCount*4).fill(0x00);
+
+        /*buff.forEach((v, i)=>{
+            //if(v === 0){
+                buff[i] = Math.floor(Math.random() * Math.floor(255));
+            //}
+        });*/
+            
+        this.updateApovTexture(gl, buff);
+        
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.activeTexture(gl.TEXTURE0);
         
         gl.uniform1i(gl.getUniformLocation(this.program, "frame"), 0);
@@ -107,18 +118,23 @@ class View extends Component {
                 display[offset + 0] = i+1.0;
                 display[offset + 1] = j+1.0;
                 display[offset + 2] = 0.0;
+                
                 display[offset + 3] = i;
                 display[offset + 4] = j+1.0;
                 display[offset + 5] = 0.0;
+                
                 display[offset + 6] = i+1.0;
                 display[offset + 7] = j;
                 display[offset + 8] = 0.0;
+                
                 display[offset + 9] = i;
                 display[offset + 10] = j+1.0;
                 display[offset + 11] = 0.0;
+                
                 display[offset + 12] = i;
                 display[offset + 13] = j;
                 display[offset + 14] = 0.0;
+                
                 display[offset + 15] = i+1.0;
                 display[offset + 16] = j;
                 display[offset + 17] = 0.0;
@@ -171,29 +187,27 @@ class View extends Component {
         this.initModelView(gl);    
     }
     
-    // Todo
     setFrame(gl, value) {
-        if(value.frame.length > 0) {
-            console.log(value.frame);    
+        if(value.frame.length > 0 && this.texture !== undefined) {
+            this.updateApovTexture(gl, value.frame);
         }
     }
     
     render() {
         const size = this.props.size.split('x');
         this.width = size[0];
-        this.height = size[1];
-        
+        this.height = size[1];    
         return  <canvas ref={this.canvas} className="view"
-                        width={this.width} height={this.height}>
-                        <Context.Consumer>{value =>
-                            this.setFrame(this.gl, value)}</Context.Consumer>
+                    width={this.width} height={this.height}>
+                    <Context.Consumer>{value =>
+                        this.setFrame(this.gl, value)}</Context.Consumer>
                 </canvas>;
     }
     
     draw() {
         clearTimeout(this.timer);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, this.atomCount);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, this.atomCount*6);
         this.timer = setTimeout(() => {
             this.draw();
         }, 1000/30);

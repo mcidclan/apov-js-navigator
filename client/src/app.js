@@ -15,8 +15,8 @@ function App() {
         <div className="app">
             <Menu sizes={['1280x720', '640x480', '256x256', '512x512']} 
                 onViewSizeChange={handleViewSizeChange} />
-            <Streamer>
-                <View apovDisplaySize="2x2" size={viewSize} />
+            <Streamer frameSize='256x256'>
+                <View apovDisplaySize='256x256' size={viewSize} />
             </Streamer>
         </div>
     );

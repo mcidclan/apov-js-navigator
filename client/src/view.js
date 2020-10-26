@@ -213,13 +213,15 @@ class View extends Component {
         this.initModelView(gl);    
     }
     
-    setFrame(gl, value) {
-        if(value.frame.length > 0 && this.texture !== undefined) {
-            this.updateApovTexture(gl, value.frame);
+    setFrame(gl, frame) {
+        if(frame instanceof Uint8Array &&
+            frame.length > 0 && this.texture !== undefined) {
+            this.updateApovTexture(gl, frame);
         }
     }
     
     render() {
+        console.log("RENDER VIEW");
         const size = this.props.size.split('x');
         this.width = size[0];
         this.height = size[1];
@@ -231,8 +233,8 @@ class View extends Component {
         return  <div className="view">
                     <canvas ref={this.canvas} style={cStyle}
                         width={this.width} height={this.height}>
-                            <Context.Consumer>{value =>
-                            this.setFrame(this.gl, value)}</Context.Consumer>
+                            <Context.Consumer>{frame =>
+                            this.setFrame(this.gl, frame)}</Context.Consumer>
                     </canvas>
                 </div>;
     }

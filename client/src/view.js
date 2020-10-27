@@ -141,28 +141,28 @@ class View extends Component {
         while(i < DISPLAY_HALF_WIDTH) {
             let j = -DISPLAY_HALF_HEIGHT;
             while(j < DISPLAY_HALF_HEIGHT) {
-                display[offset + 0] = i+1.0;
-                display[offset + 1] = j+1.0;
+                display[offset + 0] = j+1.0;
+                display[offset + 1] = i+1.0;
                 display[offset + 2] = 0.0;
                 
-                display[offset + 3] = i;
-                display[offset + 4] = j+1.0;
+                display[offset + 3] = j;
+                display[offset + 4] = i+1.0;
                 display[offset + 5] = 0.0;
                 
-                display[offset + 6] = i+1.0;
-                display[offset + 7] = j;
+                display[offset + 6] = j+1.0;
+                display[offset + 7] = i;
                 display[offset + 8] = 0.0;
                 
-                display[offset + 9] = i;
-                display[offset + 10] = j+1.0;
+                display[offset + 9] = j;
+                display[offset + 10] = i+1.0;
                 display[offset + 11] = 0.0;
                 
-                display[offset + 12] = i;
-                display[offset + 13] = j;
+                display[offset + 12] = j;
+                display[offset + 13] = i;
                 display[offset + 14] = 0.0;
                 
-                display[offset + 15] = i+1.0;
-                display[offset + 16] = j;
+                display[offset + 15] = j+1.0;
+                display[offset + 16] = i;
                 display[offset + 17] = 0.0;
                 offset += 18;
                 j++;
@@ -198,7 +198,7 @@ class View extends Component {
         mat4.translate(model, model, [0.0, 0.0, -1.0]);
         mat4.scale(model, model, [
             1.0 / this.displayWidth,
-            1.0 / this.displayHeight, 0.0
+            -1.0 / this.displayHeight, 0.0
         ]);
         gl.uniformMatrix4fv(gl.getUniformLocation(
         this.program, 'model'), false, model);

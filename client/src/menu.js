@@ -28,6 +28,11 @@ class Menu extends Component {
         });
     }
     
+    clearCache(event) {
+        caches.delete('apov_frames').then(() => {
+        });
+    }
+    
     render() {
         return <div className="menu">
             <input className="element"
@@ -36,6 +41,7 @@ class Menu extends Component {
                 onChange={this.onChangeViewSize}
                 list="viewsize" placeholder="Change view size" />
             <datalist id="viewsize">{this.props.sizes.map(this.genSizes)}</datalist>
+            <button className="clearCache">Clear Cache</button>
         </div>;
     }
 }

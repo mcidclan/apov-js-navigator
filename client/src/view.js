@@ -47,7 +47,7 @@ const VERTEX_SHADER =
     in vec4 f_color;
     void main() {
         v_index = float(gl_VertexID);
-        vec4 pos = vec4(position.x, position.y, position.z, 1.0);
+        vec4 pos = vec4(position.y, -position.x, 0.0, 1.0);
         gl_Position = projection * model * pos;
     }
 `;
@@ -56,11 +56,9 @@ class View extends Component {
     constructor(props) {
         super(props);
         this.canvas = React.createRef();
-        
-        const displaySizes = this.props.apovDisplaySize.split('x');
-        this.displayWidth = displaySizes[0];
-        this.displayHeight = displaySizes[1];
-        this.atomCount = this.displayHeight*this.displayWidth;
+        this.state = {
+            mounted: false
+        };
     }
     
     initShaders(gl, vertexShader, fragmentShader) {
@@ -114,12 +112,6 @@ class View extends Component {
         this.texture = gl.createTexture();
         const buff = new Uint8Array(this.atomCount*4).fill(0x00);
 
-        /*buff.forEach((v, i)=>{
-            //if(v === 0){
-                buff[i] = Math.floor(Math.random() * Math.floor(255));
-            //}
-        });*/
-            
         this.updateApovTexture(gl, buff);
         
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -141,28 +133,28 @@ class View extends Component {
         while(i < DISPLAY_HALF_WIDTH) {
             let j = -DISPLAY_HALF_HEIGHT;
             while(j < DISPLAY_HALF_HEIGHT) {
-                display[offset + 0] = j+1.0;
-                display[offset + 1] = i+1.0;
+                display[offset + 0] = i+1.0;
+                display[offset + 1] = j+1.0;
                 display[offset + 2] = 0.0;
                 
-                display[offset + 3] = j;
-                display[offset + 4] = i+1.0;
+                display[offset + 3] = i;
+                display[offset + 4] = j+1.0;
                 display[offset + 5] = 0.0;
                 
-                display[offset + 6] = j+1.0;
-                display[offset + 7] = i;
+                display[offset + 6] = i+1.0;
+                display[offset + 7] = j;
                 display[offset + 8] = 0.0;
                 
-                display[offset + 9] = j;
-                display[offset + 10] = i+1.0;
+                display[offset + 9] = i;
+                display[offset + 10] = j+1.0;
                 display[offset + 11] = 0.0;
                 
-                display[offset + 12] = j;
-                display[offset + 13] = i;
+                display[offset + 12] = i;
+                display[offset + 13] = j;
                 display[offset + 14] = 0.0;
                 
-                display[offset + 15] = j+1.0;
-                display[offset + 16] = i;
+                display[offset + 15] = i+1.0;
+                display[offset + 16] = j;
                 display[offset + 17] = 0.0;
                 offset += 18;
                 j++;
@@ -198,7 +190,7 @@ class View extends Component {
         mat4.translate(model, model, [0.0, 0.0, -1.0]);
         mat4.scale(model, model, [
             1.0 / this.displayWidth,
-            -1.0 / this.displayHeight, 0.0
+            1.0 / this.displayHeight, 1.0
         ]);
         gl.uniformMatrix4fv(gl.getUniformLocation(
         this.program, 'model'), false, model);
@@ -210,7 +202,19 @@ class View extends Component {
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.initProjection(gl);
-        this.initModelView(gl);    
+        this.initModelView(gl);
+    }
+    
+    initApovContext(gl, size) {
+        this.displayWidth = size;
+        this.displayHeight = size;
+        this.atomCount = this.displayHeight*this.displayWidth;
+    
+        this.initApovShaders(gl);
+        this.initApovTexture(gl);
+        this.initApovDisplay(gl);
+        this.initWebglContext(gl);
+        this.draw();
     }
     
     setFrame(gl, frame) {
@@ -221,7 +225,6 @@ class View extends Component {
     }
     
     render() {
-        console.log("RENDER VIEW");
         const size = this.props.size.split('x');
         this.width = size[0];
         this.height = size[1];
@@ -233,17 +236,22 @@ class View extends Component {
         return  <div className="view">
                     <canvas ref={this.canvas} style={cStyle}
                         width={this.width} height={this.height}>
-                            <Context.Consumer>{frame =>
-                            this.setFrame(this.gl, frame)}</Context.Consumer>
+                            {this.state.mounted ? <Context.Consumer>{
+                                value => {
+                                if(this.dlid === undefined) {
+                                    this.initApovContext(this.gl, value.size);
+                                }
+                                this.setFrame(this.gl, value.frame);
+                            }}</Context.Consumer> : ''}
                     </canvas>
                 </div>;
     }
     
     draw() {
-        clearTimeout(this.timer);
+        clearTimeout(this.dlid);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.atomCount*6);
-        this.timer = setTimeout(() => {
+        this.dlid = setTimeout(() => {
             this.draw();
         }, 1000/30);
     }
@@ -253,11 +261,9 @@ class View extends Component {
         if(!this.gl) {
            throw new Error('Can\'t initialize webgl2.');
         }
-        this.initApovShaders(this.gl);
-        this.initApovTexture(this.gl);
-        this.initApovDisplay(this.gl);
-        this.initWebglContext(this.gl);
-        this.draw();
+        this.setState({
+            mounted: true
+        });
     }
     
     componentDidUpdate(prevProps, prevState) {

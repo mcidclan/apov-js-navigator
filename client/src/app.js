@@ -5,18 +5,18 @@ import Menu from './menu';
 import './app.scss';
 
 function App() {
-    const [viewSize, setViewSize] = useState('256x256');
+    const [viewSize, setViewSize] = useState('640x480');
     
-    function handleViewSizeChange(event) {
+    function handleViewSize(event) {
         setViewSize(event.target.value);
     };
     
     return (
         <div className="app">
             <Menu sizes={['1280x720', '640x480', '256x256', '512x512']} 
-                onViewSizeChange={handleViewSizeChange} />
-            <Streamer frameSize='256x256'>
-                <View apovDisplaySize='256x256' size={viewSize} />
+                onViewSizeChange={handleViewSize} />
+            <Streamer>
+                <View size={viewSize} />
             </Streamer>
         </div>
     );

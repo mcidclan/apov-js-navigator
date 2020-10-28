@@ -6,16 +6,11 @@ export const Context = React.createContext({frame : []});
 class Streamer extends Component {
     
     constructor(props) {
-        super(props);
-        this.frameWidth = +this.props.frameSize.split('x')[0];
-        this.frameHeight = +this.props.frameSize.split('x')[1];
-        this.size = this.frameWidth;
-        
+        super(props);        
         this.state = {
             frame: [],
-            offset: 0
+            size: 0
         };
-        
         this.hrotate = 0;
         this.vrotate = 0;
     }
@@ -31,10 +26,13 @@ class Streamer extends Component {
                 this.RAY_STEP = header[3];
                 this.WIDTH_BLOCK_COUNT = header[4]
                 this.DEPTH_BLOCK_COUNT = header[5];
+                
+                this.frameWidth = this.SPACE_BLOCK_SIZE;
+                this.frameHeight = this.SPACE_BLOCK_SIZE;
+                
                 this.FRAME_BYTES_COUNT = this.frameWidth * this.frameHeight * 4;
                 this.SPACE_BYTES_COUNT = ((this.DEPTH_BLOCK_COUNT *
                 this.SPACE_BLOCK_SIZE) / this.RAY_STEP) * this.FRAME_BYTES_COUNT;
-                this.setState({optionUpdated: true});
             });
     }
     
@@ -44,7 +42,7 @@ class Streamer extends Component {
     }
     
     getFrame(offset) {
-        const url = `/frame/${offset}/${this.size}`;
+        const url = `/frame/${offset}/${this.SPACE_BLOCK_SIZE}`;
         return caches.open('apov_frames').then(cache => {
             
             cache.match(url).then(res => {
@@ -59,7 +57,10 @@ class Streamer extends Component {
             })
 
             .then(data => data.arrayBuffer())
-            .then(data => this.setState({frame: new Uint8Array(data)}))
+            .then(data => this.setState({
+                frame: new Uint8Array(data),
+                size: this.SPACE_BLOCK_SIZE
+            }))
         });
     }
 
@@ -93,7 +94,7 @@ class Streamer extends Component {
             this.srid = setTimeout(() => {
                 this.loopRotation(obj, max);
                 clearTimeout(this.srid);
-            }, 1000);
+            }, 500);
         }
     }
     
@@ -117,9 +118,11 @@ class Streamer extends Component {
     }
     
     render() {
-        return  <Context.Provider value={this.state.frame}>
+        const component = this.state.size !== 0 ?
+                <Context.Provider value={this.state}>
                     {this.content()}{this.props.children}
-                </Context.Provider>;
+                </Context.Provider> : <div></div>;
+        return  component;
     }
     
     componentDidMount() {

@@ -1,0 +1,28 @@
+.progress {
+    width: 300px;
+    height: 18px;
+    display: block;
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+    border: solid 1px rgba(90, 90, 90, 0.2);
+    margin-right: 10px;
+    div {
+        position: relative;
+        display: block;
+        float: left;
+        height: 20px;
+        min-width: 0px;
+        span {
+            width: 100%;
+            height: 20px;
+            display: inline-block;
+            &.on {
+                background: #FF6C52;
+            }
+            &.done {
+                background: #98D515;
+            }
+        }
+    }
+}

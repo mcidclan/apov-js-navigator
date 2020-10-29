@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {PureComponent} from 'react';
 import { Context } from "./streamer";
 import mat4 from 'gl-mat4'
 import './view.scss';
@@ -52,7 +52,7 @@ const VERTEX_SHADER =
     }
 `;
 
-class View extends Component {
+class View extends PureComponent {
     constructor(props) {
         super(props);
         this.canvas = React.createRef();
@@ -225,6 +225,7 @@ class View extends Component {
     }
     
     render() {
+        console.log("View render called.");
         const size = this.props.size.split('x');
         this.width = size[0];
         this.height = size[1];

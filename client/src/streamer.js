@@ -41,10 +41,49 @@ class Streamer extends Component {
             this.VERTICAL_POV_COUNT + vrotate) * this.SPACE_BYTES_COUNT;
     }
     
+    gaugeCache() {
+        const d = this.HORIZONTAL_POV_COUNT * this.VERTICAL_POV_COUNT;
+        return Math.floor(100 * (this._hrotate + this._vrotate * this.HORIZONTAL_POV_COUNT) / d);
+    }
+        
+    resetGauge(reset = false) {
+        if(this._hrotate === undefined || reset) { this._hrotate = 0; }
+        if(this._vrotate === undefined || reset) { this._vrotate = 0; }
+        if(reset) {
+            this.fillUpCache();
+        }
+    }
+    
+    fillUpCache() {
+        clearTimeout(this.fcid);
+        this.resetGauge();
+        const offset = this.getOffset(0, this._hrotate, this._vrotate);
+        const url = `/frame/${offset}/${this.SPACE_BLOCK_SIZE}`;
+        caches.open('apov_frames').then(cache => {
+            cache.match(url).then(res => {
+                if(res === undefined) {
+                    return fetch(url).then(data => cache.put(url, data));
+                }
+                return res;
+            }).then(() => {
+                const progression = this.gaugeCache();
+                if(progression < 100) {
+                    this._hrotate = (this._hrotate + 1) % this.HORIZONTAL_POV_COUNT;
+                    if(!this._hrotate) {
+                        this._vrotate++;
+                    }
+                    this.fcid = setTimeout(() => {
+                        this.fillUpCache();
+                    }, 10);
+                }
+                this.props.onFillUp(progression);
+            })
+        });
+    }
+    
     getFrame(offset) {
         const url = `/frame/${offset}/${this.SPACE_BLOCK_SIZE}`;
         return caches.open('apov_frames').then(cache => {
-            
             cache.match(url).then(res => {
                 if(res === undefined) {
                     return fetch(url)
@@ -55,7 +94,6 @@ class Streamer extends Component {
                 }
                 return res;
             })
-
             .then(data => data.arrayBuffer())
             .then(data => this.setState({
                 frame: new Uint8Array(data),
@@ -128,6 +166,7 @@ class Streamer extends Component {
     componentDidMount() {
         this.getOptions().then(() => {
             this.getFrame(this.getOffset(0/*m*/, 0/*h*/, 0/*v*/));
+            this.fillUpCache();
         });
     }
 }

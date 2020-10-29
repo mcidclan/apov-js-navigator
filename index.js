@@ -27,7 +27,7 @@ app.get('/frame/:offset/:size', (req, res) => {
     }).on('data', (chunk) => {
         stream.destroy();
         res.end(chunk, 'binary');
-    }).on('erro', () => {
+    }).on('error', () => {
         res.status(500).end();
     });
 });

@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Progress from "./progress";
 import './menu.scss';
 
 class Menu extends Component {
@@ -18,7 +19,7 @@ class Menu extends Component {
                 viewSize: filtered
         });
         if(this.props.sizes.indexOf(event.target.value) !== -1) {
-            this.props.onViewSizeChange(event);
+            this.props.onViewResize(event);
         }
     }
     
@@ -30,18 +31,21 @@ class Menu extends Component {
     
     clearCache(event) {
         caches.delete('apov_frames').then(() => {
+            console.log("Apov frames cache has been deleted!");
         });
+        this.props.onClearCache(true);
     }
     
     render() {
         return <div className="menu">
-            <input className="element"
+            <input className="list"
                 value={this.state.viewSize}
                 onClick={this.onClickViewSize}
                 onChange={this.onChangeViewSize}
                 list="viewsize" placeholder="Change view size" />
             <datalist id="viewsize">{this.props.sizes.map(this.genSizes)}</datalist>
-            <button className="clearCache">Clear Cache</button>
+            <button className="clearCache" onClick={(e) => {this.clearCache(e)}}>Clear Cache</button>
+            <Progress progression={this.props.progression}/>
         </div>;
     }
 }

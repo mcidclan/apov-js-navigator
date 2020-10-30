@@ -2,30 +2,30 @@
     display: flex;
     width: calc(100% - 20px);
     height: 36px;
-    background: #E0E0E0;
+    background: #DCDCDC;
     padding: 0;
     margin: 0;
     padding-left: 10px;
     padding-right: 10px;
     padding-bottom: 4px;
-    flex-direction: row-reverse;
     align-items: flex-end;
     .list {
         border: 0;
         padding: 0;
         margin: 0;
         height: 20px;
-        width: 130px;
+        width: 90px;
         text-align: right;
         border-radius: 3px;
     }
     .clearCache {
         border: 0;
         width: 100px;
-        margin-right: 10px;
+        margin-left: 10px;
         height: 20px;
         cursor: pointer;
         border-radius: 3px;
+        white-space: nowrap;
         &:hover {
             background: #30303030;
         }

@@ -230,12 +230,12 @@ class View extends PureComponent {
         this.width = size[0];
         this.height = size[1];
         
-        const cStyle = {
+        /*const cStyle = {
             "maxHeight": `${this.height}px`
         };
-        
+        style={cStyle}*/
         return  <div className="view">
-                    <canvas ref={this.canvas} style={cStyle}
+                    <canvas ref={this.canvas}
                         width={this.width} height={this.height}>
                             {this.state.mounted ? <Context.Consumer>{
                                 value => {

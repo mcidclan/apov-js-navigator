@@ -42,7 +42,7 @@ class Menu extends Component {
                 value={this.state.viewSize}
                 onClick={this.onClickViewSize}
                 onChange={this.onChangeViewSize}
-                list="viewsize" placeholder="Change view size" />
+                list="viewsize" placeholder="View size" />
             <datalist id="viewsize">{this.props.sizes.map(this.genSizes)}</datalist>
             <button className="clearCache" onClick={(e) => {this.clearCache(e)}}>Clear Cache</button>
             <Progress progression={this.props.progression}/>

@@ -6,7 +6,7 @@ import './app.scss';
 
 function App() {
     const [progression, setProgression] = useState(0);
-    const [viewSize, setViewSize] = useState('640x480');
+    const [viewSize, setViewSize] = useState('256x256');
     const streamer = useRef();
     
     function handleViewResize(event) {

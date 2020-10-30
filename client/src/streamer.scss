@@ -1,22 +1,29 @@
 .control {
     display: block;
     position: absolute;
-    height: 60px;
-    width: 60px;
-    padding: 10px;
+    height: 90px;
+    width: 90px;
+    padding: 20px;
     right: 0;
+    top: 40px;
     z-index: 2147483647;
+    opacity:0.7;
     >div {
-        padding:0;
-        margin:0;
-        height:20px;
-        width:100%;
+        padding: 0;
+        margin: 0;
+        height: 30px;
+        width: 100%;
         span {
+            border-radius: 3px;
             display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: solid 1px #606060;
+            width: 26px;
+            height: 26px;
+            border: solid 2px #000000;
             background: #B0B0B0;
+            &:hover {
+                transition: background 0.5s ease-in 0s;
+                background:#FF6C52;
+            }
         }
         
         &:nth-child(1), &:nth-child(3) {

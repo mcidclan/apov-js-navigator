@@ -138,18 +138,30 @@ class Streamer extends Component {
     
     content() {
         if(this.SPACE_BLOCK_SIZE !== undefined) {
-            return  <div className="control" onMouseUp={e => {this.stopRotation()}}>
-                        <div><span onMouseDown={e => {
-                            this.rotate({vrotate:-1}, this.VERTICAL_POV_COUNT);
-                        }}/></div>
-                        <div><span onMouseDown={e => {
-                            this.rotate({hrotate:1}, this.HORIZONTAL_POV_COUNT);
-                        }}/><span onMouseDown={e => {
-                            this.rotate({hrotate:-1}, this.HORIZONTAL_POV_COUNT);
-                        }}/></div>
-                        <div><span onMouseDown={e => {
-                            this.rotate({vrotate:1}, this.VERTICAL_POV_COUNT);
-                        }}/></div>
+            
+            const vr = (v) => {
+                this.rotate({vrotate:v}, this.VERTICAL_POV_COUNT);
+            };
+            const hr = (v) => {
+                this.rotate({hrotate:v}, this.HORIZONTAL_POV_COUNT);
+            };
+            const sr = () => {
+                this.stopRotation();
+            };
+            
+            return  <div className="control">
+                        <div><span
+                                onMouseLeave={e => {sr()}}
+                                onMouseOver={e => {vr(-1)}}/></div>
+                        <div><span 
+                                onMouseLeave={e => {sr()}}
+                                onMouseOver={e => {hr(1)}}/
+                            ><span
+                                onMouseLeave={e => {sr()}}
+                                onMouseOver={e => {hr(-1)}}/></div>
+                        <div><span
+                                onMouseLeave={e => {sr()}}
+                                onMouseOver={e => {vr(1)}}/></div>
                     </div>;
         }
         return <div></div>;

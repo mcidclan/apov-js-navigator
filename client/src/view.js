@@ -33,7 +33,7 @@ const FRAGMENT_SHADER_SINGLE_QUAD =
             d = 1.0 / vsize.y;
             d *= (vsize.x - vsize.y) / 2.0;
         }
-        vec4 color = texture(frame, vec2(u - d, v));
+        vec4 color = texture(frame, vec2(u - d, 1.0 - v));
         f_color = vec4(color.r, color.g, color.b, 1.0);
     }
 `;

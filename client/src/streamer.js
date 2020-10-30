@@ -6,7 +6,7 @@ export const Context = React.createContext({frame : []});
 class Streamer extends Component {
     
     constructor(props) {
-        super(props);        
+        super(props);
         this.state = {
             frame: [],
             size: 0
@@ -84,7 +84,7 @@ class Streamer extends Component {
     getFrame(offset) {
         const url = `/frame/${offset}/${this.SPACE_BLOCK_SIZE}`;
         return caches.open('apov_frames').then(cache => {
-            cache.match(url).then(res => {
+            return cache.match(url).then(res => {
                 if(res === undefined) {
                     return fetch(url)
                         .then(data => {
@@ -101,21 +101,10 @@ class Streamer extends Component {
             }))
         });
     }
-
-    stopRotation() {
-        clearTimeout(this.lrid);
-        clearTimeout(this.srid);
-    }
-
-    loopRotation(obj, max) {
-        clearTimeout(this.lrid);
-        this.rotate(obj, max, false);
-        this.lrid = setTimeout(() => {
-            this.loopRotation(obj, max);
-        }, 1000/30);
-    }
+    
     // Todo, move
-    rotate(obj, max, started = true) {
+    rotate(obj, max, started = false) {
+        clearTimeout(this.lrid);
         const key = Object.keys(obj)[0];        
         if(key in {hrotate:'', vrotate:''}) {
             const value = Object.values(obj)[0];
@@ -125,43 +114,49 @@ class Streamer extends Component {
             } else if(this[key] < 0) {
                 this[key] = max - 1;
             }
-            this.getFrame(this.getOffset(0, this.hrotate, this.vrotate));
-        }
-        
-        if(started) {
-            this.srid = setTimeout(() => {
-                this.loopRotation(obj, max);
-                clearTimeout(this.srid);
-            }, 500);
+            this.getFrame(this.getOffset(0, this.hrotate, this.vrotate)).then(() => {
+                if(started) {
+                    this.lrid = setTimeout(() => {
+                        this._rotate(obj, max);
+                    }, 500);
+                } else {
+                    this.lrid = setTimeout(() => {
+                        this._rotate(obj, max);
+                    }, 1000/30);
+                }
+            });
         }
     }
     
     content() {
         if(this.SPACE_BLOCK_SIZE !== undefined) {
-            
             const vr = (v) => {
-                this.rotate({vrotate:v}, this.VERTICAL_POV_COUNT);
+                this._rotate = this.rotate;
+                this.rotate({vrotate:v}, this.VERTICAL_POV_COUNT, true);
             };
             const hr = (v) => {
-                this.rotate({hrotate:v}, this.HORIZONTAL_POV_COUNT);
+                this._rotate = this.rotate;
+                this.rotate({hrotate:v}, this.HORIZONTAL_POV_COUNT, true);
             };
             const sr = () => {
-                this.stopRotation();
+                this._rotate = () => {
+                    clearTimeout(this.lrid);
+                };
             };
             
             return  <div className="control">
                         <div><span
                                 onMouseLeave={e => {sr()}}
-                                onMouseOver={e => {vr(-1)}}/></div>
+                                onMouseEnter={e => {vr(-1)}}/></div>
                         <div><span 
                                 onMouseLeave={e => {sr()}}
-                                onMouseOver={e => {hr(1)}}/
+                                onMouseEnter={e => {hr(1)}}/
                             ><span
                                 onMouseLeave={e => {sr()}}
-                                onMouseOver={e => {hr(-1)}}/></div>
+                                onMouseEnter={e => {hr(-1)}}/></div>
                         <div><span
                                 onMouseLeave={e => {sr()}}
-                                onMouseOver={e => {vr(1)}}/></div>
+                                onMouseEnter={e => {vr(1)}}/></div>
                     </div>;
         }
         return <div></div>;

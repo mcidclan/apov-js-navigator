@@ -19,6 +19,25 @@ const ENV_VERTEX_SHADER =
     gl_Position = vec4(position, 1.0);
 `
 
+const FRAGMENT_SHADER_SINGLE_QUAD = 
+`   #version 300 es
+    precision highp float;
+    uniform vec2 vsize;
+    uniform sampler2D frame;
+    out vec4 f_color;
+    void main() {
+        float d = 0.0;
+        float u = gl_FragCoord.xy.x / vsize.y;
+        float v = gl_FragCoord.xy.y / vsize.y;
+        if(vsize.x > vsize.y) {
+            d = 1.0 / vsize.y;
+            d *= (vsize.x - vsize.y) / 2.0;
+        }
+        vec4 color = texture(frame, vec2(u - d, v));
+        f_color = vec4(color.r, color.g, color.b, 1.0);
+    }
+`;
+
 const FRAGMENT_SHADER = 
 `   #version 300 es
     precision highp float;
@@ -59,6 +78,9 @@ class View extends PureComponent {
         this.state = {
             mounted: false
         };
+        
+        // Todo, available option from the ui
+        this.useSingleQuad = true;
     }
     
     initShaders(gl, vertexShader, fragmentShader) {
@@ -75,7 +97,7 @@ class View extends PureComponent {
         gl.compileShader(fshader);
         
         if(!gl.getShaderParameter(fshader, gl.COMPILE_STATUS)) {
-            console.log('Can\'t comile fragment shader.', 
+            console.log('Can\'t compile fragment shader.', 
             gl.getShaderInfoLog(fshader));
             gl.deleteShader(fshader);
         }
@@ -86,14 +108,16 @@ class View extends PureComponent {
         gl.linkProgram(program);
 
         if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            throw new Error('Can\'t link shader program.');
+            console.log('Can\'t link shader program.', 
+            gl.getProgramInfoLog(program));
         }
         
         return program;
     }
      
     initApovShaders(gl) {
-        this.program = this.initShaders(gl, VERTEX_SHADER, FRAGMENT_SHADER);
+        const frag = this.useSingleQuad ? FRAGMENT_SHADER_SINGLE_QUAD : FRAGMENT_SHADER;
+        this.program = this.initShaders(gl, VERTEX_SHADER, frag);
         gl.useProgram(this.program);
     }
     
@@ -119,49 +143,66 @@ class View extends PureComponent {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.activeTexture(gl.TEXTURE0);
-        
         gl.uniform1i(gl.getUniformLocation(this.program, "frame"), 0);
-        gl.uniform1f(gl.getUniformLocation(this.program, 'twidth'), this.displayWidth);
+        
+        if(this.useSingleQuad) {
+            const vsize = [this.width, this.height];
+            gl.uniform2fv(gl.getUniformLocation(this.program, 'vsize'), vsize);
+        } else gl.uniform1f(gl.getUniformLocation(this.program, 'twidth'), this.displayWidth);
     }
     
     initApovDisplay(gl) {
         let display = [];
         const DISPLAY_HALF_WIDTH = this.displayWidth / 2;
         const DISPLAY_HALF_HEIGHT = this.displayHeight / 2;
-        let offset = 0;
-        let i = -DISPLAY_HALF_WIDTH;
-        while(i < DISPLAY_HALF_WIDTH) {
-            let j = -DISPLAY_HALF_HEIGHT;
-            while(j < DISPLAY_HALF_HEIGHT) {
-                display[offset + 0] = i+1.0;
-                display[offset + 1] = j+1.0;
-                display[offset + 2] = 0.0;
-                
-                display[offset + 3] = i;
-                display[offset + 4] = j+1.0;
-                display[offset + 5] = 0.0;
-                
-                display[offset + 6] = i+1.0;
-                display[offset + 7] = j;
-                display[offset + 8] = 0.0;
-                
-                display[offset + 9] = i;
-                display[offset + 10] = j+1.0;
-                display[offset + 11] = 0.0;
-                
-                display[offset + 12] = i;
-                display[offset + 13] = j;
-                display[offset + 14] = 0.0;
-                
-                display[offset + 15] = i+1.0;
-                display[offset + 16] = j;
-                display[offset + 17] = 0.0;
-                offset += 18;
-                j++;
+        
+        if(this.useSingleQuad) {
+            const DHW = DISPLAY_HALF_WIDTH;
+            const DHH = DISPLAY_HALF_HEIGHT;
+            display = [
+                DHW, DHH, 0.0,
+                -DHW, DHH, 0.0,
+                DHW, -DHH, 0.0,
+                -DHW, DHH, 0.0,    
+                -DHW, -DHH, 0.0,
+                DHW, -DHH, 0.0,
+            ];
+        } else {
+            let offset = 0;
+            let i = -DISPLAY_HALF_WIDTH;
+            while(i < DISPLAY_HALF_WIDTH) {
+                let j = -DISPLAY_HALF_HEIGHT;
+                while(j < DISPLAY_HALF_HEIGHT) {
+                    display[offset + 0] = i+1.0;
+                    display[offset + 1] = j+1.0;
+                    display[offset + 2] = 0.0;
+                    
+                    display[offset + 3] = i;
+                    display[offset + 4] = j+1.0;
+                    display[offset + 5] = 0.0;
+                    
+                    display[offset + 6] = i+1.0;
+                    display[offset + 7] = j;
+                    display[offset + 8] = 0.0;
+                    
+                    display[offset + 9] = i;
+                    display[offset + 10] = j+1.0;
+                    display[offset + 11] = 0.0;
+                    
+                    display[offset + 12] = i;
+                    display[offset + 13] = j;
+                    display[offset + 14] = 0.0;
+                    
+                    display[offset + 15] = i+1.0;
+                    display[offset + 16] = j;
+                    display[offset + 17] = 0.0;
+                    offset += 18;
+                    j++;
+                }
+                i++;
             }
-            i++;
         }
-
+        
         const buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(display),
@@ -184,7 +225,14 @@ class View extends PureComponent {
         gl.uniformMatrix4fv(gl.getUniformLocation(
         this.program, 'projection'), false, projection);
     }
-        
+
+    updateUniforms(gl) {
+        if(this.useSingleQuad) {
+            const vsize = [this.width, this.height];
+            gl.uniform2fv(gl.getUniformLocation(this.program, 'vsize'), vsize);
+        }
+    }
+    
     initModelView(gl) {
         const model = mat4.create();
         mat4.translate(model, model, [0.0, 0.0, -1.0]);
@@ -229,7 +277,6 @@ class View extends PureComponent {
         const size = this.props.size.split('x');
         this.width = size[0];
         this.height = size[1];
-        
         /*const cStyle = {
             "maxHeight": `${this.height}px`
         };
@@ -249,9 +296,10 @@ class View extends PureComponent {
     }
     
     draw() {
+        const count = 6 * (this.useSingleQuad ? 1 : this.atomCount);
         clearTimeout(this.dlid);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, this.atomCount*6);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, count);
         this.dlid = setTimeout(() => {
             this.draw();
         }, 1000/30);
@@ -270,11 +318,12 @@ class View extends PureComponent {
     componentDidUpdate(prevProps, prevState) {
         if(prevProps.size !== this.props.size) {
             this.initProjection(this.gl, true);
+            this.updateUniforms(this.gl);
         }
     }
     
     componentWillUnmount() {
-        clearTimeout(this.timer);
+        clearTimeout(this.dlid);
     }
 }
 

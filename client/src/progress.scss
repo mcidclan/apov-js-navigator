@@ -1,5 +1,6 @@
 .progress {
-    width: 298px;
+    max-width: 298px;
+    width: calc(40% - 2px);
     height: 18px;
     display: block;
     position: relative;

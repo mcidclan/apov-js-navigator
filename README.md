@@ -1,7 +1,7 @@
 # apov-js-navigator
 ```
 Javascript version of the Atomic Point of View Navigator. A project focused on
-interactive streaming of pre-rendered, rasterized voxels regions.
+interactive streaming of pre-rendered voxel regions.
 
 Please see atomic-point-of-view project to generate the atoms.apov file.
 Note that the header should be exported as shown below:
